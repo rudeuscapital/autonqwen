@@ -1,0 +1,21 @@
+# Next.js
+.next/
+out/
+node_modules/
+npm-debug.log*
+
+# Env
+.env.local
+.env*.local
+
+# Data dirs
+memory/
+uploads/
+
+# Build
+.vercel/
+*.tgz
+
+# OS
+.DS_Store
+Thumbs.db

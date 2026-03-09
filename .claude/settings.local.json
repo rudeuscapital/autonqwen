@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc --noEmit --pretty)",
+      "Bash(npx vitest run src/lib/tools/executor.test.ts)",
+      "Bash(npx next build)"
+    ]
+  }
+}

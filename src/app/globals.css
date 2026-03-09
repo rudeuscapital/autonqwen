@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Fira+Code:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: #050810;
+  color: #e8eef8;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(0, 229, 204, 0.2);
+  color: #00e5cc;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #080c17; }
+::-webkit-scrollbar-thumb { background: #253348; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #00e5cc; }
+
+/* Prose inside chat messages */
+.prose-agent p { margin-bottom: 0.75em; }
+.prose-agent p:last-child { margin-bottom: 0; }
+.prose-agent code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: rgba(0, 229, 204, 0.08);
+  border: 1px solid rgba(0, 229, 204, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #00e5cc;
+}
+.prose-agent pre {
+  background: #0d1220;
+  border: 1px solid #253348;
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+.prose-agent pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8em;
+  color: #8a97b0;
+}
+.prose-agent ul, .prose-agent ol { padding-left: 1.25em; margin-bottom: 0.75em; }
+.prose-agent li { margin-bottom: 0.25em; }
+.prose-agent h1,.prose-agent h2,.prose-agent h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin-bottom: 0.5em;
+  margin-top: 1em;
+  color: #e8eef8;
+}
+.prose-agent strong { color: #e8eef8; }
+.prose-agent blockquote {
+  border-left: 3px solid #00e5cc;
+  padding-left: 12px;
+  color: #8a97b0;
+  font-style: italic;
+}
+.prose-agent a { color: #00e5cc; text-decoration: underline; }
+.prose-agent table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.875em; }
+.prose-agent th { background: #131926; padding: 8px 12px; text-align: left; border: 1px solid #1e2a3d; }
+.prose-agent td { padding: 8px 12px; border: 1px solid #1e2a3d; color: #8a97b0; }
+
+/* ─── Animated Glowing Orbs ─────────────────────────────── */
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform, opacity;
+}
+
+.glow-orb--cyan {
+  background: radial-gradient(circle, rgba(0,229,204,.18) 0%, rgba(0,229,204,.04) 40%, transparent 70%);
+  animation: glow-drift-1 16s ease-in-out infinite, glow-pulse 4s ease-in-out infinite;
+}
+
+.glow-orb--gold {
+  background: radial-gradient(circle, rgba(240,180,41,.14) 0%, rgba(240,180,41,.03) 40%, transparent 70%);
+  animation: glow-drift-2 20s ease-in-out infinite, glow-pulse 5s ease-in-out infinite;
+}
+
+.glow-orb--rose {
+  background: radial-gradient(circle, rgba(255,92,122,.10) 0%, rgba(255,92,122,.02) 40%, transparent 70%);
+  animation: glow-drift-3 22s ease-in-out infinite, glow-pulse 6s ease-in-out infinite;
+}
+
+.glow-orb--lime {
+  background: radial-gradient(circle, rgba(57,224,121,.12) 0%, rgba(57,224,121,.03) 40%, transparent 70%);
+  animation: glow-drift-4 18s ease-in-out infinite, glow-pulse 4.5s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes glow-drift-1 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(60px, -40px); }
+  50% { transform: translate(-30px, 50px); }
+  75% { transform: translate(40px, 20px); }
+}
+
+@keyframes glow-drift-2 {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(-50px, 60px); }
+  66% { transform: translate(40px, -30px); }
+}
+
+@keyframes glow-drift-3 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(30px, 50px); }
+  50% { transform: translate(-60px, -20px); }
+  75% { transform: translate(20px, -40px); }
+}
+
+@keyframes glow-drift-4 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-40px, -50px); }
+}
+
+/* Glow line — horizontal animated shimmer */
+.glow-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(0,229,204,.3) 30%, rgba(0,229,204,.6) 50%, rgba(0,229,204,.3) 70%, transparent 100%);
+  background-size: 200% 100%;
+  animation: glow-line-move 6s ease-in-out infinite;
+}
+
+@keyframes glow-line-move {
+  0% { background-position: 200% 0; opacity: 0.3; }
+  50% { background-position: -200% 0; opacity: 0.8; }
+  100% { background-position: 200% 0; opacity: 0.3; }
+}
