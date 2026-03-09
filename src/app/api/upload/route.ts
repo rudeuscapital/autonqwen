@@ -5,7 +5,7 @@ import path from "path";
 
 export const runtime = "nodejs";
 
-const UPLOAD_DIR = path.resolve("./uploads");
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.resolve("./uploads");
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_EXTENSIONS = new Set([
   // Spreadsheets

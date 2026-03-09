@@ -4,7 +4,11 @@ const nextConfig = {
   serverExternalPackages: ["better-sqlite3", "xlsx"],
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000"],
+      bodySizeLimit: "12mb",
+      allowedOrigins: [
+        "localhost:3000",
+        process.env.DOMAIN || "",
+      ].filter(Boolean),
     },
   },
 };

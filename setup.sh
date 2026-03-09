@@ -374,6 +374,7 @@ DEFAULT_MODEL=${OLLAMA_MODEL:-qwen3.5}
 SESSION_SECRET=${SESSION_SECRET}
 MEMORY_DIR=${INSTALL_DIR}/memory
 UPLOAD_DIR=${INSTALL_DIR}/uploads
+DOMAIN=${DOMAIN}
 EOF
   chown "$APP_USER:$APP_USER" "$INSTALL_DIR/.env.local"
   chmod 600 "$INSTALL_DIR/.env.local"
@@ -441,11 +442,11 @@ WantedBy=multi-user.target
 EOF
 
   systemctl daemon-reload
-  systemctl restart autonqwen
-  systemctl restart autonqwen
+  systemctl enable autonqwen >> "$LOG_FILE" 2>&1
+  systemctl start autonqwen
   sleep 2
 
-  if systemctl restart autonqwen; then
+  if systemctl is-active --quiet autonqwen; then
     ok "autonqwen service started and enabled"
   else
     warn "Service may have issues. Check: journalctl -u autonqwen -n 30"
@@ -632,11 +633,11 @@ cmd="${1:-help}"
 case "$cmd" in
 
   start)
-    systemctl restart autonqwen && ok "AutonQwen started"
+    systemctl start autonqwen && ok "AutonQwen started"
     ;;
 
   stop)
-    systemctl restart autonqwen && ok "AutonQwen stopped"
+    systemctl stop autonqwen && ok "AutonQwen stopped"
     ;;
 
   restart)
@@ -646,7 +647,7 @@ case "$cmd" in
   status)
     echo
     echo -e "${BOLD}── App Service ────────────────────────────────${RST}"
-    systemctl restart autonqwen --no-pager -l | head -20
+    systemctl status autonqwen --no-pager -l | head -20
     echo
     echo -e "${BOLD}── Ollama Service ─────────────────────────────${RST}"
     systemctl status ollama --no-pager -l | head -10

@@ -212,7 +212,8 @@ async function fetchUrl(args: Record<string, unknown>): Promise<ToolResult> {
 
 function dbQuery(args: Record<string, unknown>): ToolResult {
   const query = String(args.query || "");
-  const dbPath = String(args.db_path || "./memory/agent.db");
+  const defaultDbDir = process.env.MEMORY_DIR || "./memory";
+  const dbPath = String(args.db_path || path.join(defaultDbDir, "agent.db"));
 
   if (!query) return { success: false, output: "", error: "query is required" };
 
