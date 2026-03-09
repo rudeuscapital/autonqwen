@@ -27,7 +27,7 @@ services:
     environment:
       - NODE_ENV=production
       - OLLAMA_URL=http://ollama:11434
-      - DEFAULT_MODEL=qwen3.5
+      - DEFAULT_MODEL=qwen3:1.7b
       - SESSION_SECRET=${SESSION_SECRET:-change-this-to-a-secure-random-string-32ch}
       - MEMORY_DIR=/app/memory
       - UPLOAD_DIR=/app/uploads

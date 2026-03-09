@@ -33,8 +33,8 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [model, setModel] = useState("qwen3.5");
-  const [models, setModels] = useState<string[]>(["qwen3.5"]);
+  const [model, setModel] = useState("qwen3:1.7b");
+  const [models, setModels] = useState<string[]>(["qwen3:1.7b"]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [ollamaStatus, setOllamaStatus] = useState<"online" | "offline" | "checking">("checking");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; path: string; size: number }[]>([]);

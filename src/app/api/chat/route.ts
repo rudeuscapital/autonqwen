@@ -35,11 +35,11 @@ export async function POST(req: NextRequest) {
   // Get or create session
   let sessionData = sessionId ? getSessionData(sessionId) : null;
   if (!sessionData) {
-    sessionData = createSession(model || process.env.DEFAULT_MODEL || "qwen3.5");
+    sessionData = createSession(model || process.env.DEFAULT_MODEL || "qwen3:1.7b");
     sessionId = sessionData.id;
   }
 
-  const resolvedModel = model || sessionData.model || "qwen3.5";
+  const resolvedModel = model || sessionData.model || "qwen3:1.7b";
   const history = sessionData.messages;
 
   const stream = new ReadableStream({

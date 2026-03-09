@@ -23,7 +23,7 @@ export async function GET() {
     status: "ok",
     ollama: ollamaStatus,
     models,
-    defaultModel: process.env.DEFAULT_MODEL || "qwen3.5",
+    defaultModel: process.env.DEFAULT_MODEL || "qwen3:1.7b",
     timestamp: new Date().toISOString(),
   });
 }

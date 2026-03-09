@@ -123,7 +123,7 @@ export function getSessionData(id: string): SessionData | null {
   }
 }
 
-export function createSession(model: string = process.env.DEFAULT_MODEL || "qwen3.5"): SessionData {
+export function createSession(model: string = process.env.DEFAULT_MODEL || "qwen3:1.7b"): SessionData {
   ensureDirs();
   const id = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   const now = new Date().toISOString();

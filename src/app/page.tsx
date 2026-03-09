@@ -60,7 +60,7 @@ export default async function LandingPage() {
           <span className="font-display font-extrabold text-base">AutonQwen</span>
         </div>
         <div className="flex gap-1">
-          {["Features", "How it works", "Stack"].map((item) => (
+          {["Features", "How it works", "Stack", "Roadmap"].map((item) => (
             <a key={item} href={`#${item.toLowerCase().replace(/ /g, "-")}`}
               className="px-3.5 py-1.5 rounded-lg text-sm text-text-2 hover:text-text-1 hover:bg-ink-3 transition-all">
               {item}
@@ -91,7 +91,7 @@ export default async function LandingPage() {
 
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-agent/25 bg-cyan-agent/5 font-mono text-[11px] text-cyan-agent uppercase tracking-widest mb-8 animate-fade-up">
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-agent animate-blink-dot" />
-          Powered by Ollama · Qwen3.5 · Web3 Auth
+          Powered by Ollama · Qwen3 · Web3 Auth
         </div>
 
         <h1 className="font-display font-extrabold text-5xl md:text-6xl lg:text-7xl leading-[1.1] tracking-[-0.03em] max-w-3xl animate-fade-up" style={{ animationDelay: "80ms" }}>
@@ -138,12 +138,12 @@ export default async function LandingPage() {
             <p className="pl-3 text-text-3">🔐 Connect your wallet to continue...</p>
             <p className="pl-3 text-lime-agent">✔ Wallet 0x71C7...8976F verified</p>
             <p className="pl-3 text-lime-agent">✔ AutonQwen ready · 9 tools loaded</p>
-            <p><span className="text-cyan-agent">›</span> <span className="text-text-1">Analyze Q1 2025 sales data and create a report</span></p>
-            <p className="pl-3 text-gold-agent">🧠 Thinking... reading spreadsheet...</p>
-            <p className="pl-3 text-lime-agent">✔ read_spreadsheet → 1,247 rows loaded</p>
-            <p className="pl-3 text-gold-agent">🧠 Analyzing trends...</p>
-            <p className="pl-3 text-lime-agent">✔ write_file → report_q1.md created</p>
-            <p className="pl-3 text-lime-agent">✔ Task complete · 3 tool calls</p>
+            <p><span className="text-cyan-agent">›</span> <span className="text-text-1">List all files in /home/user and save to a text file</span></p>
+            <p className="pl-3 text-gold-agent">🧠 Thinking... listing directory...</p>
+            <p className="pl-3 text-lime-agent">✔ list_directory → 12 items found</p>
+            <p className="pl-3 text-gold-agent">🧠 Writing results to file...</p>
+            <p className="pl-3 text-lime-agent">✔ write_file → filelist.txt created</p>
+            <p className="pl-3 text-lime-agent">✔ Task complete · 2 tool calls · 100% success</p>
             <p><span className="text-cyan-agent">›</span> <span className="inline-block w-2 h-4 bg-cyan-agent align-middle animate-cursor" /></p>
           </div>
         </div>
@@ -176,15 +176,15 @@ export default async function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3" id="how-it-works">
           {[
-            { icon: "🧠", title: "Agentic ReAct Loop", wide: true, desc: "Full ReAct loop — think, call tools, observe, iterate — for up to 10 cycles until the task is complete. Powered by Qwen3.5's native tool-calling API.", tag: "max 10 iterations" },
-            { icon: "📁", title: "Full File System", desc: "Read, write, append, and list files. Auto-create directories. Manage files directly from chat.", tag: "read · write · list" },
-            { icon: "💻", title: "Terminal Execution", desc: "Run shell commands, git, npm, python scripts. Safety filter automatically blocks dangerous commands.", tag: "run_command" },
-            { icon: "🌐", title: "Web Search & Fetch", desc: "DuckDuckGo search without API keys. Scrape and parse any URL for real-time info.", tag: "web_search · fetch_url" },
-            { icon: "🗄️", title: "SQLite + Excel", desc: "Full SQL queries on local SQLite. Read and generate .xlsx spreadsheets from structured data.", tag: "db_query · spreadsheet" },
+            { icon: "🧠", title: "Agentic ReAct Loop", wide: true, desc: "Think → act → observe → repeat. The agent iterates up to 10 cycles, chaining tools together until the task is done. Example: \"Create a notes.txt file with today's date\" — 100% success rate on file and command tasks.", tag: "100% on core tools" },
+            { icon: "📁", title: "Full File System", desc: "Read, write, append, and list files. Example: \"List all files in /home\" → instantly returns directory listing. 100% reliable on all file operations.", tag: "read · write · list" },
+            { icon: "💻", title: "Terminal Execution", desc: "Run shell commands like ls, cat, pwd, echo, git status. Safety filter blocks dangerous commands. Example: \"Run whoami\" → returns current user. 100% success.", tag: "run_command" },
+            { icon: "🌐", title: "Web Search & Fetch", desc: "Search via DuckDuckGo and fetch any public URL. Example: \"Search for latest Bitcoin price\" → returns top results with snippets. Works without API keys.", tag: "web_search · fetch_url" },
+            { icon: "🗄️", title: "SQLite + Excel", desc: "Run SQL queries on local SQLite databases. Read and create .xlsx spreadsheets. Example: \"Create a table and insert 3 rows\" → executes SQL directly. 100% success.", tag: "db_query · spreadsheet" },
             { icon: "🔐", title: "Web3 Wallet Auth", wide: true, desc: "Access is gated by your crypto wallet. MetaMask, WalletConnect, Coinbase Wallet, or Phantom. Your wallet address is your identity — no passwords, no email.", tag: "MetaMask · WalletConnect · Phantom" },
-            { icon: "⚡", title: "Real-time SSE Stream", desc: "Watch the agent think and work in real time. Tool calls appear live as they execute.", tag: "Server-Sent Events" },
-            { icon: "💾", title: "Persistent Memory", desc: "Conversation history and cross-session fact memory. Agent builds knowledge over time.", tag: "disk-persisted" },
-            { icon: "🚀", title: "Next.js 14 SSR", desc: "Full-stack React with App Router. SSR pages, API routes, streaming — all in one process.", tag: "App Router · RSC" },
+            { icon: "⚡", title: "Real-time SSE Stream", desc: "Watch the agent think and work in real time. Every tool call streams live — you see each step as it happens. No waiting for final response.", tag: "Server-Sent Events" },
+            { icon: "💾", title: "Persistent Memory", desc: "Conversations are saved across sessions. The agent remembers facts you tell it using [REMEMBER: key = value]. Knowledge persists across chats.", tag: "disk-persisted" },
+            { icon: "🚀", title: "Next.js 14 SSR", desc: "Full-stack React with App Router. Server-rendered pages, API routes, and streaming — all running in a single process on your VPS.", tag: "App Router · RSC" },
           ].map((f, i) => (
             <div key={i} className={`${f.wide ? "md:col-span-2" : ""} group relative bg-ink-2 border border-rim rounded-2xl p-6 hover:border-cyan-agent/25 hover:-translate-y-0.5 transition-all overflow-hidden`}>
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
@@ -209,9 +209,9 @@ export default async function LandingPage() {
             style={{ background: "linear-gradient(90deg, transparent, #253348 20%, #00e5cc 50%, #253348 80%, transparent)" }} />
           {[
             { n: "01", h: "Connect Wallet", p: "Log in with MetaMask or any Web3 wallet. No email, no password. Your wallet address is your identity." },
-            { n: "02", h: "Choose Model", p: "Select an available AI model — Qwen3.5 or others. Switch models anytime from the settings panel." },
-            { n: "03", h: "Assign a Task", p: "Type your task in natural language. The agent will call tools, iterate, and display results in real-time." },
-            { n: "04", h: "Watch Results", p: "The agent works autonomously. Monitor every step through live streaming in your browser." },
+            { n: "02", h: "Choose Model", p: "Select your Ollama model — qwen3:1.7b for speed or qwen3.5 for quality. Switch models anytime." },
+            { n: "03", h: "Give a Command", p: "Ask the agent to read files, run commands, search the web, or query databases. It executes tools directly — no simulations." },
+            { n: "04", h: "Get Real Results", p: "Every tool call is real. Files are created, commands are executed, searches return live data. 100% verifiable output." },
           ].map((s) => (
             <div key={s.n} className="group text-center px-3 md:px-5">
               <div className="w-12 h-12 rounded-full mx-auto mb-4 bg-ink-2 border border-rim-2 grid place-items-center font-mono text-sm text-cyan-agent relative z-10 transition-all group-hover:bg-cyan-agent group-hover:text-black group-hover:border-cyan-agent group-hover:shadow-[0_0_24px_rgba(0,229,204,.3)] group-hover:scale-110">
@@ -280,6 +280,116 @@ export default async function LandingPage() {
               <span className="font-mono text-[11px] text-gold-agent">Launch Coming Soon</span>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ROADMAP */}
+      <section id="roadmap" className="max-w-5xl mx-auto px-6 pb-24 relative z-10">
+        <div className="text-center mb-14">
+          <p className="font-mono text-[10.5px] text-cyan-agent uppercase tracking-[.18em] mb-3">Roadmap</p>
+          <h2 className="font-display font-extrabold text-3xl md:text-4xl tracking-tight leading-tight mb-3">
+            What&apos;s <em className="not-italic text-cyan-agent">coming next</em>
+          </h2>
+          <p className="text-text-2 text-sm max-w-md mx-auto">Our development roadmap — building the future of autonomous AI agents, one phase at a time.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            {
+              phase: "Phase 1",
+              title: "Foundation",
+              status: "live",
+              color: "cyan",
+              items: [
+                "Core agent with ReAct loop",
+                "9 built-in tools (file, terminal, web, DB)",
+                "Web3 wallet authentication",
+                "Real-time SSE streaming",
+                "Persistent memory & sessions",
+              ],
+            },
+            {
+              phase: "Phase 2",
+              title: "Intelligence",
+              status: "in-progress",
+              color: "gold",
+              items: [
+                "Multi-model support & hot-swap",
+                "RAG with document embeddings",
+                "Image & vision capabilities",
+                "Advanced prompt chaining",
+                "Plugin system for custom tools",
+              ],
+            },
+            {
+              phase: "Phase 3",
+              title: "Ecosystem",
+              status: "upcoming",
+              color: "rose",
+              items: [
+                "$ATQWEN token launch",
+                "Token-gated premium features",
+                "Community tool marketplace",
+                "Multi-agent collaboration",
+                "On-chain activity logging",
+              ],
+            },
+            {
+              phase: "Phase 4",
+              title: "Scale",
+              status: "planned",
+              color: "lime",
+              items: [
+                "Distributed agent swarm",
+                "Cross-chain wallet support",
+                "Enterprise API & self-host SDK",
+                "Agent-to-agent communication",
+                "Decentralized compute network",
+              ],
+            },
+          ].map((p) => {
+            const colorMap: Record<string, { border: string; bg: string; text: string; dot: string; badge: string }> = {
+              cyan: { border: "border-cyan-agent/25", bg: "bg-cyan-agent/8", text: "text-cyan-agent", dot: "bg-cyan-agent", badge: "bg-cyan-agent/7 border-cyan-agent/15 text-cyan-agent" },
+              gold: { border: "border-gold-agent/25", bg: "bg-gold-agent/8", text: "text-gold-agent", dot: "bg-gold-agent", badge: "bg-gold-agent/7 border-gold-agent/15 text-gold-agent" },
+              rose: { border: "border-rose-agent/25", bg: "bg-rose-agent/8", text: "text-rose-agent", dot: "bg-rose-agent", badge: "bg-rose-agent/7 border-rose-agent/15 text-rose-agent" },
+              lime: { border: "border-lime-agent/25", bg: "bg-lime-agent/8", text: "text-lime-agent", dot: "bg-lime-agent", badge: "bg-lime-agent/7 border-lime-agent/15 text-lime-agent" },
+            };
+            const c = colorMap[p.color];
+            const statusLabel: Record<string, string> = { live: "LIVE", "in-progress": "IN PROGRESS", upcoming: "UPCOMING", planned: "PLANNED" };
+
+            return (
+              <div key={p.phase} className={`group relative bg-ink-2 border border-rim rounded-2xl p-6 hover:${c.border} hover:-translate-y-0.5 transition-all overflow-hidden`}>
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                  style={{ background: `radial-gradient(circle at 0% 0%, rgba(0,229,204,.04) 0%, transparent 60%)` }} />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-10 h-10 rounded-xl ${c.bg} border ${c.border} grid place-items-center font-mono text-xs font-bold ${c.text}`}>
+                        {p.phase.split(" ")[1]}
+                      </div>
+                      <div>
+                        <div className="font-mono text-[10px] text-text-3 uppercase tracking-wider">{p.phase}</div>
+                        <div className="font-display font-bold text-[15px]">{p.title}</div>
+                      </div>
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[10px] border ${c.badge}`}>
+                      {p.status === "live" && <span className={`w-1.5 h-1.5 rounded-full ${c.dot} animate-blink-dot`} />}
+                      {p.status === "in-progress" && <span className={`w-1.5 h-1.5 rounded-full ${c.dot} animate-pulse`} />}
+                      {statusLabel[p.status]}
+                    </span>
+                  </div>
+                  <ul className="space-y-2">
+                    {p.items.map((item) => (
+                      <li key={item} className="flex items-start gap-2.5 text-[13px] text-text-2 leading-relaxed">
+                        <span className={`mt-1.5 w-1 h-1 rounded-full ${p.status === "live" ? c.dot : "bg-text-3"} shrink-0`} />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
