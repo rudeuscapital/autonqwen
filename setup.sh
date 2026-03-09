@@ -442,6 +442,10 @@ ProtectHome=yes
 WantedBy=multi-user.target
 EOF
 
+  # Ensure all ReadWritePaths directories exist before starting
+  mkdir -p "${INSTALL_DIR}/memory" "${INSTALL_DIR}/uploads" "${INSTALL_DIR}/.next/standalone/.next/cache"
+  chown -R "$APP_USER:$APP_USER" "${INSTALL_DIR}/memory" "${INSTALL_DIR}/uploads" "${INSTALL_DIR}/.next/standalone/.next/cache"
+
   systemctl daemon-reload
   systemctl enable autonqwen >> "$LOG_FILE" 2>&1
   systemctl start autonqwen
@@ -503,7 +507,7 @@ server {
         proxy_set_header Connection '';
         proxy_buffering off;
         proxy_cache off;
-        proxy_read_timeout 300s;
+        proxy_read_timeout 600s;
         proxy_connect_timeout 10s;
         chunked_transfer_encoding on;
         add_header X-Accel-Buffering no;

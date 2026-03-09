@@ -62,8 +62,9 @@ export async function runAgentStream(
           })),
           tools: toolDefinitions,
           stream: false,
+          keep_alive: "10m",
         }),
-        signal: AbortSignal.timeout(120000),
+        signal: AbortSignal.timeout(300000), // 5 min for slow CPU inference
       });
 
       if (!res.ok) {
