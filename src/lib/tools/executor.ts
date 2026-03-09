@@ -307,9 +307,22 @@ function readSpreadsheet(args: Record<string, unknown>): ToolResult {
   if (!fs.existsSync(filePath))
     return { success: false, output: "", error: `File not found: ${filePath}` };
 
+  // Check read permission before passing to xlsx
+  try {
+    fs.accessSync(filePath, fs.constants.R_OK);
+  } catch {
+    return { success: false, output: "", error: `Permission denied: cannot read ${filePath}. Run: sudo chown autonqwen:autonqwen "${filePath}"` };
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const XLSX = require("xlsx");
-  const workbook = XLSX.readFile(filePath);
+  let workbook;
+  try {
+    workbook = XLSX.readFile(filePath);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, output: "", error: `Failed to read spreadsheet: ${msg}` };
+  }
   const sheetName = String(args.sheet || workbook.SheetNames[0]);
   const sheet = workbook.Sheets[sheetName];
 
