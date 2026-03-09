@@ -8,7 +8,7 @@ export async function GET() {
 
   try {
     const res = await fetch(`${ollamaUrl}/api/tags`, {
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(10000),
     });
     if (res.ok) {
       const data = await res.json() as { models: Array<{ name: string }> };

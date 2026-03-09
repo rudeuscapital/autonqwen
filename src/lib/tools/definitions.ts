@@ -5,11 +5,11 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "read_file",
-      description: "Read a text file from the filesystem. For spreadsheets (.xlsx, .xls, .csv), use read_spreadsheet instead.",
+      description: "Read a text file. For spreadsheets (.xlsx, .xls, .csv), use read_spreadsheet instead. Relative paths resolve to workspace.",
       parameters: {
         type: "object",
         properties: {
-          path: { type: "string", description: "Absolute or relative file path to read" },
+          path: { type: "string", description: "File path (absolute or relative to workspace)" },
         },
         required: ["path"],
       },
@@ -19,11 +19,11 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "write_file",
-      description: "Write or append content to a file. Creates parent directories if needed.",
+      description: "Write or append content to a file. Relative paths are saved in the workspace directory. Creates parent directories if needed.",
       parameters: {
         type: "object",
         properties: {
-          path: { type: "string", description: "File path to write to" },
+          path: { type: "string", description: "File path (absolute or relative to workspace)" },
           content: { type: "string", description: "Text content to write" },
           append: { type: "string", description: "If 'true', append to file instead of overwriting", default: "false" },
         },
@@ -35,11 +35,11 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "list_directory",
-      description: "List files and directories at a path, showing names, types, and sizes.",
+      description: "List files and directories at a path, showing names, types, and sizes. Defaults to workspace directory.",
       parameters: {
         type: "object",
         properties: {
-          path: { type: "string", description: "Directory path to list. Defaults to current directory.", default: "." },
+          path: { type: "string", description: "Directory path to list (default: workspace)", default: "." },
         },
         required: [],
       },
@@ -49,13 +49,13 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "run_command",
-      description: "Execute a shell command and return stdout/stderr. Dangerous commands are blocked.",
+      description: "Execute a shell command and return stdout/stderr. Runs in workspace directory by default. Dangerous commands are blocked.",
       parameters: {
         type: "object",
         properties: {
           command: { type: "string", description: "Shell command to execute" },
-          cwd: { type: "string", description: "Working directory for the command", default: "." },
-          timeout: { type: "string", description: "Timeout in milliseconds (default: 15000)", default: "15000" },
+          cwd: { type: "string", description: "Working directory (default: workspace)" },
+          timeout: { type: "string", description: "Timeout in milliseconds (default: 30000)", default: "30000" },
         },
         required: ["command"],
       },
@@ -95,12 +95,12 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "db_query",
-      description: "Run a SQL query on a SQLite database file. Supports SELECT, INSERT, UPDATE, DELETE, CREATE.",
+      description: "Run a SQL query on a SQLite database. Database is stored in memory directory. Supports SELECT, INSERT, UPDATE, DELETE, CREATE.",
       parameters: {
         type: "object",
         properties: {
           query: { type: "string", description: "SQL query to execute" },
-          db_path: { type: "string", description: "Path to SQLite database file", default: "./memory/agent.db" },
+          db_path: { type: "string", description: "Path to SQLite database file (default: memory/agent.db)" },
         },
         required: ["query"],
       },
@@ -110,11 +110,11 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "read_spreadsheet",
-      description: "Read data from an Excel (.xlsx) or CSV file. Returns data as JSON.",
+      description: "Read data from an Excel (.xlsx, .xls) or CSV file. Returns data as JSON rows. Use this for ALL spreadsheet files.",
       parameters: {
         type: "object",
         properties: {
-          path: { type: "string", description: "Path to the spreadsheet file" },
+          path: { type: "string", description: "Path to the spreadsheet file (use exact path from UPLOADED_FILE tag)" },
           sheet: { type: "string", description: "Sheet name to read (optional, defaults to first sheet)" },
         },
         required: ["path"],
@@ -125,7 +125,7 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "write_spreadsheet",
-      description: "Create an Excel spreadsheet from JSON data array.",
+      description: "Create an Excel spreadsheet from JSON data array. Relative paths are saved in workspace.",
       parameters: {
         type: "object",
         properties: {

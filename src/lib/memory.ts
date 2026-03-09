@@ -67,7 +67,13 @@ UPLOADED FILES:
 - When a user uploads files, their message will contain lines like: [UPLOADED_FILE name="filename.json" path="/absolute/path/to/uploads/12345_filename.json" size="2KB"]
 - ALWAYS use the exact "path" value from the UPLOADED_FILE tag when calling read_file or read_spreadsheet
 - NEVER guess or construct file paths yourself — use the provided path exactly as-is
-- The uploaded files are stored in the server's uploads directory, NOT in the project root
+- For spreadsheet files (.xlsx, .xls, .csv), ALWAYS use read_spreadsheet, NOT read_file
+
+FILE PATHS:
+- Relative paths (e.g. "output.txt") are saved in the workspace (uploads directory)
+- Absolute paths work if they point to allowed directories
+- When writing files, use relative paths unless the user specifies otherwise
+- The workspace directory is the uploads folder — use list_directory with path="." to see its contents
 
 AVAILABLE TOOLS: read_file, write_file, list_directory, run_command, web_search, fetch_url, db_query, read_spreadsheet, write_spreadsheet
 

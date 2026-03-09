@@ -2,7 +2,25 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 import type { ToolResult } from "@/types";
-import { MEMORY_DIR } from "@/lib/paths";
+import { MEMORY_DIR, UPLOAD_DIR } from "@/lib/paths";
+
+// ─── Writable workspace for agent file operations ────────
+// All relative paths are resolved under UPLOAD_DIR (which is in ReadWritePaths)
+const WORKSPACE_DIR = UPLOAD_DIR;
+
+/** Resolve a file path: absolute paths pass through, relative paths go to workspace */
+function resolvePath(filePath: string): string {
+  if (path.isAbsolute(filePath)) return filePath;
+  return path.join(WORKSPACE_DIR, filePath);
+}
+
+/** Check if a path is in a writable directory */
+function isWritablePath(filePath: string): boolean {
+  const abs = path.resolve(filePath);
+  return abs.startsWith(path.resolve(UPLOAD_DIR)) ||
+    abs.startsWith(path.resolve(MEMORY_DIR)) ||
+    abs.startsWith("/tmp");
+}
 
 // ─── Safety blocklist for run_command ─────────────────────
 const BLOCKED_PATTERNS = [
@@ -49,8 +67,10 @@ export async function executeTool(
 
 // ─── Implementations ──────────────────────────────────────
 function readFile(args: Record<string, unknown>): ToolResult {
-  const filePath = String(args.path || "");
-  if (!filePath) return { success: false, output: "", error: "path is required" };
+  const rawPath = String(args.path || "");
+  if (!rawPath) return { success: false, output: "", error: "path is required" };
+
+  const filePath = resolvePath(rawPath);
 
   // Suggest read_spreadsheet for spreadsheet files
   const ext = path.extname(filePath).toLowerCase();
@@ -61,6 +81,12 @@ function readFile(args: Record<string, unknown>): ToolResult {
   if (!fs.existsSync(filePath))
     return { success: false, output: "", error: `File not found: ${filePath}` };
 
+  try {
+    fs.accessSync(filePath, fs.constants.R_OK);
+  } catch {
+    return { success: false, output: "", error: `Permission denied: cannot read ${filePath}` };
+  }
+
   const stat = fs.statSync(filePath);
   if (stat.size > 200 * 1024)
     return { success: false, output: "", error: `File too large (${Math.round(stat.size / 1024)}KB). Max: 200KB` };
@@ -70,11 +96,17 @@ function readFile(args: Record<string, unknown>): ToolResult {
 }
 
 function writeFile(args: Record<string, unknown>): ToolResult {
-  const filePath = String(args.path || "");
+  const rawPath = String(args.path || "");
   const content = String(args.content || "");
   const append = args.append === "true" || args.append === true;
 
-  if (!filePath) return { success: false, output: "", error: "path is required" };
+  if (!rawPath) return { success: false, output: "", error: "path is required" };
+
+  const filePath = resolvePath(rawPath);
+
+  if (!isWritablePath(filePath)) {
+    return { success: false, output: "", error: `Cannot write to ${filePath}. Use a relative path (files are saved in workspace) or an absolute path under uploads/memory directory.` };
+  }
 
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -89,40 +121,60 @@ function writeFile(args: Record<string, unknown>): ToolResult {
 }
 
 function listDirectory(args: Record<string, unknown>): ToolResult {
-  const dirPath = String(args.path || ".");
+  const rawPath = String(args.path || ".");
+  const dirPath = rawPath === "." ? WORKSPACE_DIR : resolvePath(rawPath);
+
   if (!fs.existsSync(dirPath))
     return { success: false, output: "", error: `Directory not found: ${dirPath}` };
+
+  try {
+    fs.accessSync(dirPath, fs.constants.R_OK);
+  } catch {
+    return { success: false, output: "", error: `Permission denied: cannot read ${dirPath}` };
+  }
 
   const items = fs.readdirSync(dirPath);
   const lines = items.map((item) => {
     const full = path.join(dirPath, item);
-    const stat = fs.statSync(full);
-    const type = stat.isDirectory() ? "DIR " : "FILE";
-    const size = stat.isFile() ? ` ${Math.round(stat.size / 1024)}KB` : "";
-    return `${type}  ${item}${size}`;
+    try {
+      const stat = fs.statSync(full);
+      const type = stat.isDirectory() ? "DIR " : "FILE";
+      const size = stat.isFile() ? ` ${Math.round(stat.size / 1024)}KB` : "";
+      return `${type}  ${item}${size}`;
+    } catch {
+      return `????  ${item} (access denied)`;
+    }
   });
 
   return {
     success: true,
-    output: lines.length > 0 ? lines.join("\n") : `(empty directory: ${dirPath})`,
+    output: lines.length > 0 ? `[${dirPath}]\n${lines.join("\n")}` : `(empty directory: ${dirPath})`,
   };
 }
 
 function runCommand(args: Record<string, unknown>): ToolResult {
   const command = String(args.command || "");
-  const cwd = String(args.cwd || ".");
-  const timeout = parseInt(String(args.timeout || "15000"), 10);
+  const rawCwd = String(args.cwd || "");
+  const timeout = parseInt(String(args.timeout || "30000"), 10);
 
   if (!command) return { success: false, output: "", error: "command is required" };
   if (!isSafeCommand(command))
     return { success: false, output: "", error: `Blocked: potentially dangerous command detected` };
 
+  // Default cwd to workspace (writable), not "." (which is .next/standalone in production)
+  let cwd = WORKSPACE_DIR;
+  if (rawCwd) {
+    const resolved = resolvePath(rawCwd);
+    if (fs.existsSync(resolved)) cwd = resolved;
+  }
+
   try {
     const output = execSync(command, {
-      cwd: fs.existsSync(cwd) ? cwd : ".",
+      cwd,
       timeout,
       encoding: "utf-8",
       maxBuffer: 1024 * 512,
+      env: { ...process.env, HOME: MEMORY_DIR },
     });
     return { success: true, output: output || "(no output)" };
   } catch (err: unknown) {
@@ -269,7 +321,9 @@ async function fetchUrl(args: Record<string, unknown>): Promise<ToolResult> {
 
 function dbQuery(args: Record<string, unknown>): ToolResult {
   const query = String(args.query || "");
-  const dbPath = String(args.db_path || path.join(MEMORY_DIR, "agent.db"));
+  const rawDbPath = String(args.db_path || "");
+  // Always use MEMORY_DIR for database — guaranteed writable
+  const dbPath = rawDbPath && path.isAbsolute(rawDbPath) ? rawDbPath : path.join(MEMORY_DIR, "agent.db");
 
   if (!query) return { success: false, output: "", error: "query is required" };
 
@@ -280,21 +334,28 @@ function dbQuery(args: Record<string, unknown>): ToolResult {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const db = new Database(dbPath);
+    db.pragma("journal_mode = WAL");
     const stmt = db.prepare(query);
     const isSelect = query.trim().toUpperCase().startsWith("SELECT");
 
+    let result: ToolResult;
     if (isSelect) {
       const rows = stmt.all();
-      if (rows.length === 0) return { success: true, output: "(no rows returned)" };
-      const output = JSON.stringify(rows, null, 2);
-      return { success: true, output: `${rows.length} rows:\n${output}` };
+      if (rows.length === 0) {
+        result = { success: true, output: "(no rows returned)" };
+      } else {
+        const output = JSON.stringify(rows, null, 2);
+        result = { success: true, output: `${rows.length} rows:\n${output}` };
+      }
     } else {
       const info = stmt.run();
-      return {
+      result = {
         success: true,
         output: `OK. changes: ${info.changes}, lastInsertRowid: ${info.lastInsertRowid}`,
       };
     }
+    db.close();
+    return result;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { success: false, output: "", error: msg };
@@ -302,12 +363,15 @@ function dbQuery(args: Record<string, unknown>): ToolResult {
 }
 
 function readSpreadsheet(args: Record<string, unknown>): ToolResult {
-  const filePath = String(args.path || "");
-  if (!filePath) return { success: false, output: "", error: "path is required" };
+  const rawPath = String(args.path || "");
+  if (!rawPath) return { success: false, output: "", error: "path is required" };
+
+  const filePath = resolvePath(rawPath);
+
   if (!fs.existsSync(filePath))
     return { success: false, output: "", error: `File not found: ${filePath}` };
 
-  // Check read permission before passing to xlsx
+  // Check read permission
   try {
     fs.accessSync(filePath, fs.constants.R_OK);
   } catch {
@@ -318,7 +382,7 @@ function readSpreadsheet(args: Record<string, unknown>): ToolResult {
   const XLSX = require("xlsx");
   let workbook;
   try {
-    // Read as buffer first to avoid xlsx library file access issues with sandboxed environments
+    // Read as buffer to avoid xlsx library file access issues in sandboxed environments
     const buffer = fs.readFileSync(filePath);
     workbook = XLSX.read(buffer, { type: "buffer" });
   } catch (err) {
@@ -338,11 +402,17 @@ function readSpreadsheet(args: Record<string, unknown>): ToolResult {
 }
 
 function writeSpreadsheet(args: Record<string, unknown>): ToolResult {
-  const filePath = String(args.path || "");
+  const rawPath = String(args.path || "");
   const rawData = String(args.data || "[]");
   const sheetName = String(args.sheet_name || "Sheet1");
 
-  if (!filePath) return { success: false, output: "", error: "path is required" };
+  if (!rawPath) return { success: false, output: "", error: "path is required" };
+
+  const filePath = resolvePath(rawPath);
+
+  if (!isWritablePath(filePath)) {
+    return { success: false, output: "", error: `Cannot write to ${filePath}. Use a relative path or a path under uploads/memory directory.` };
+  }
 
   let data: unknown[];
   try {
@@ -360,7 +430,15 @@ function writeSpreadsheet(args: Record<string, unknown>): ToolResult {
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(data);
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  XLSX.writeFile(wb, filePath);
+
+  try {
+    // Write as buffer to avoid xlsx library file access issues in sandboxed environments
+    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    fs.writeFileSync(filePath, buffer);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, output: "", error: `Failed to write spreadsheet: ${msg}` };
+  }
 
   return { success: true, output: `Spreadsheet written: ${filePath} (${data.length} rows, sheet: ${sheetName})` };
 }

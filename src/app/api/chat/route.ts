@@ -5,7 +5,7 @@ import { getSessionData, createSession } from "@/lib/memory";
 import type { AgentSSEEvent } from "@/types";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 function encodeEvent(event: AgentSSEEvent): string {
   return `data: ${JSON.stringify(event)}\n\n`;
