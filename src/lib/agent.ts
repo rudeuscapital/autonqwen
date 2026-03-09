@@ -6,6 +6,55 @@ import { extractAndSaveFacts, buildSystemPrompt, getFacts, addMessage } from "./
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
 const MAX_LOOPS = 10;
 
+/** Read a streamed Ollama response and assemble the final result */
+async function readOllamaStream(res: Response): Promise<OllamaChatResponse> {
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("No response body from Ollama");
+
+  const decoder = new TextDecoder();
+  let contentParts: string[] = [];
+  let lastChunk: OllamaChatResponse | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let toolCalls: any[] | undefined;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const text = decoder.decode(value, { stream: true });
+    // Ollama sends one JSON object per line
+    const lines = text.split("\n").filter((l) => l.trim());
+
+    for (const line of lines) {
+      try {
+        const chunk = JSON.parse(line) as OllamaChatResponse;
+        lastChunk = chunk;
+
+        if (chunk.message?.content) {
+          contentParts.push(chunk.message.content);
+        }
+        if (chunk.message?.tool_calls && chunk.message.tool_calls.length > 0) {
+          toolCalls = chunk.message.tool_calls;
+        }
+      } catch {
+        // Skip malformed lines
+      }
+    }
+  }
+
+  if (!lastChunk) throw new Error("Empty response from Ollama");
+
+  // Assemble full response
+  return {
+    ...lastChunk,
+    message: {
+      role: "assistant",
+      content: contentParts.join(""),
+      ...(toolCalls ? { tool_calls: toolCalls } : {}),
+    },
+  };
+}
+
 export async function runAgentStream(
   sessionId: string,
   userMessage: string,
@@ -61,10 +110,10 @@ export async function runAgentStream(
               : {}),
           })),
           tools: toolDefinitions,
-          stream: false,
+          stream: true,
           keep_alive: "10m",
         }),
-        signal: AbortSignal.timeout(300000), // 5 min for slow CPU inference
+        signal: AbortSignal.timeout(600000), // 10 min for slow CPU inference
       });
 
       if (!res.ok) {
@@ -73,7 +122,7 @@ export async function runAgentStream(
         return;
       }
 
-      ollamaRes = await res.json() as OllamaChatResponse;
+      ollamaRes = await readOllamaStream(res);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       emit({ type: "error", message: `Failed to reach Ollama: ${msg}` });
