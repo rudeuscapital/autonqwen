@@ -1,9 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "AutonQwen — Autonomous AI Agent Platform",
-  description: "Autonomous AI agents ready to use. Powered by Qwen3.5 with full tool access. Connect your wallet and start instantly.",
+  description: "Autonomous AI agents ready to use. Powered by Qwen3 with full tool access. Connect your wallet and start instantly.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
