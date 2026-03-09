@@ -26,16 +26,71 @@ interface SessionCache {
   streaming: boolean;
 }
 
+// ─── localStorage helpers ──────────────────────────────────
+const LS_PREFIX = "aq_";
+const LS_CURRENT_SESSION = `${LS_PREFIX}current_session`;
+const LS_SESSIONS = `${LS_PREFIX}sessions`;
+
+function lsGetMessages(sessionId: string): DisplayMessage[] {
+  try {
+    const raw = localStorage.getItem(`${LS_PREFIX}msgs_${sessionId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function lsSaveMessages(sessionId: string, msgs: DisplayMessage[]) {
+  try {
+    // Only save non-streaming, completed messages
+    const toSave = msgs.map((m) => ({ ...m, isStreaming: false, events: undefined }));
+    localStorage.setItem(`${LS_PREFIX}msgs_${sessionId}`, JSON.stringify(toSave));
+  } catch { /* quota exceeded — ignore */ }
+}
+
+function lsDeleteMessages(sessionId: string) {
+  try { localStorage.removeItem(`${LS_PREFIX}msgs_${sessionId}`); } catch {}
+}
+
+function lsGetSessions(): Session[] | null {
+  try {
+    const raw = localStorage.getItem(LS_SESSIONS);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function lsSaveSessions(sessions: Session[]) {
+  try { localStorage.setItem(LS_SESSIONS, JSON.stringify(sessions)); } catch {}
+}
+
+function lsGetCurrentSession(): string | null {
+  try { return localStorage.getItem(LS_CURRENT_SESSION); } catch { return null; }
+}
+
+function lsSaveCurrentSession(id: string | null) {
+  try {
+    if (id) localStorage.setItem(LS_CURRENT_SESSION, id);
+    else localStorage.removeItem(LS_CURRENT_SESSION);
+  } catch {}
+}
+
 export default function ChatClient({ wallet, initialSessions }: Props) {
   const router = useRouter();
-  const [sessions, setSessions] = useState<Session[]>(initialSessions);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  // Merge server sessions with any cached sessions
+  const [sessions, setSessions] = useState<Session[]>(() => {
+    const cached = lsGetSessions();
+    if (!cached || cached.length === 0) return initialSessions;
+    // Server is source of truth, but use cached if server returned empty
+    return initialSessions.length > 0 ? initialSessions : cached;
+  });
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(() => lsGetCurrentSession());
+  const [messages, setMessages] = useState<DisplayMessage[]>(() => {
+    const saved = lsGetCurrentSession();
+    return saved ? lsGetMessages(saved) : [];
+  });
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [model, setModel] = useState("qwen3:1.7b");
   const [models, setModels] = useState<string[]>(["qwen3:1.7b"]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" ? window.innerWidth >= 768 : true);
   const [ollamaStatus, setOllamaStatus] = useState<"online" | "offline" | "checking">("checking");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; path: string; size: number }[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -54,9 +109,18 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
 
   // Fetch Ollama health
   useEffect(() => {
-    fetch("/api/health").then((r) => r.json()).then((d: { ollama: string; models: string[] }) => {
+    fetch("/api/health").then((r) => r.json()).then((d: { ollama: string; models: string[]; defaultModel?: string }) => {
       setOllamaStatus(d.ollama === "online" ? "online" : "offline");
-      if (d.models?.length > 0) setModels(d.models);
+      if (d.models?.length > 0) {
+        setModels(d.models);
+        // Set selected model: prefer defaultModel if available, else first model
+        const preferred = d.defaultModel || "qwen3:1.7b";
+        if (d.models.includes(preferred)) {
+          setModel(preferred);
+        } else {
+          setModel(d.models[0]);
+        }
+      }
     }).catch(() => setOllamaStatus("offline"));
   }, []);
 
@@ -70,6 +134,22 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
   useEffect(() => {
     if (currentSessionId) {
       cacheRef.current.set(currentSessionId, { messages, streaming: isStreaming });
+    }
+  }, [messages, isStreaming, currentSessionId]);
+
+  // Persist to localStorage
+  useEffect(() => {
+    lsSaveCurrentSession(currentSessionId);
+  }, [currentSessionId]);
+
+  useEffect(() => {
+    lsSaveSessions(sessions);
+  }, [sessions]);
+
+  // Save messages to localStorage when they change (debounced, skip while streaming)
+  useEffect(() => {
+    if (currentSessionId && !isStreaming && messages.length > 0) {
+      lsSaveMessages(currentSessionId, messages);
     }
   }, [messages, isStreaming, currentSessionId]);
 
@@ -91,7 +171,16 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
       return;
     }
 
-    // Load from server
+    // Check localStorage first
+    const localMsgs = lsGetMessages(sessionId);
+    if (localMsgs.length > 0) {
+      setMessages(localMsgs);
+      setIsStreaming(false);
+      setCurrentSessionId(sessionId);
+      return;
+    }
+
+    // Fallback: load from server
     const res = await fetch(`/api/sessions/${sessionId}`);
     if (!res.ok) return;
     const data = await res.json() as { messages: Array<{ role: string; content: string }> };
@@ -106,6 +195,8 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
     setMessages(displayMessages);
     setIsStreaming(false);
     setCurrentSessionId(sessionId);
+    // Save to localStorage for next visit
+    lsSaveMessages(sessionId, displayMessages);
   }
 
   async function newSession() {
@@ -124,6 +215,7 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
     setCurrentSessionId(session.id);
     setMessages([]);
     setIsStreaming(false);
+    if (window.innerWidth < 768) setSidebarOpen(false);
     inputRef.current?.focus();
   }
 
@@ -132,6 +224,7 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
     await fetch(`/api/sessions/${id}`, { method: "DELETE" });
     setSessions((prev) => prev.filter((s) => s.id !== id));
     cacheRef.current.delete(id);
+    lsDeleteMessages(id);
     if (currentSessionId === id) {
       setCurrentSessionId(null);
       setMessages([]);
@@ -166,6 +259,10 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
       const cached = cacheRef.current.get(targetSessionId);
       if (cached) {
         cacheRef.current.set(targetSessionId, { ...cached, streaming });
+        // Persist background session messages when streaming ends
+        if (!streaming && cached.messages.length > 0) {
+          lsSaveMessages(targetSessionId, cached.messages);
+        }
       }
     }
   }
@@ -360,10 +457,19 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
 
   return (
     <div className="flex h-screen bg-ink overflow-hidden">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
       <aside className={cn(
-        "flex flex-col bg-ink-1 border-r border-rim transition-all duration-200 flex-shrink-0",
-        sidebarOpen ? "w-64" : "w-0 overflow-hidden"
+        "flex flex-col bg-ink-1 border-r border-rim transition-all duration-200 flex-shrink-0 z-50",
+        "fixed md:relative inset-y-0 left-0",
+        sidebarOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full md:w-0 md:translate-x-0 md:overflow-hidden"
       )}>
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-4 py-4 border-b border-rim">
@@ -388,7 +494,7 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
               const isBgStreaming = s.id !== currentSessionId && cacheRef.current.get(s.id)?.streaming;
               return (
                 <div key={s.id}
-                  onClick={() => loadSession(s.id)}
+                  onClick={() => { loadSession(s.id); if (window.innerWidth < 768) setSidebarOpen(false); }}
                   className={cn(
                     "group flex items-start gap-2 px-3 py-2.5 mx-2 rounded-xl cursor-pointer transition-all",
                     currentSessionId === s.id
@@ -432,25 +538,25 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
       {/* MAIN */}
       <div className="flex flex-col flex-1 min-w-0">
         {/* Top bar */}
-        <header className="flex items-center gap-3 px-4 py-3 border-b border-rim bg-ink-1/60 backdrop-blur-sm flex-shrink-0">
+        <header className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 md:py-3 border-b border-rim bg-ink-1/60 backdrop-blur-sm flex-shrink-0">
           <button onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-8 h-8 rounded-lg grid place-items-center text-text-3 hover:text-text-1 hover:bg-ink-3 transition-all">
+            className="w-8 h-8 rounded-lg grid place-items-center text-text-3 hover:text-text-1 hover:bg-ink-3 transition-all flex-shrink-0">
             ☰
           </button>
 
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
             <span className={cn("w-2 h-2 rounded-full flex-shrink-0",
               ollamaStatus === "online" ? "bg-lime-agent animate-blink-dot"
               : ollamaStatus === "offline" ? "bg-rose-agent"
               : "bg-gold-agent animate-pulse")} />
-            <span className="font-mono text-[11px] text-text-3">
+            <span className="font-mono text-[11px] text-text-3 hidden sm:inline">
               Ollama {ollamaStatus}
             </span>
           </div>
 
           {/* Model selector */}
           <select value={model} onChange={(e) => setModel(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-ink-2 border border-rim text-text-2 font-mono text-[11px] outline-none hover:border-rim-2 transition-all cursor-pointer">
+            className="px-2 md:px-3 py-1.5 rounded-lg bg-ink-2 border border-rim text-text-2 font-mono text-[11px] outline-none hover:border-rim-2 transition-all cursor-pointer max-w-[140px] md:max-w-none truncate">
             {models.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
         </header>
@@ -460,7 +566,7 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
           {messages.length === 0 ? (
             <EmptyState onSend={(msg) => { setInput(msg); setTimeout(sendMessage, 0); }} />
           ) : (
-            <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+            <div className="max-w-3xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
               {messages.map((msg) => (
                 <MessageBubble key={msg.id} message={msg} />
               ))}
@@ -470,7 +576,7 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
         </div>
 
         {/* Input */}
-        <div className="border-t border-rim bg-ink-1/80 backdrop-blur-sm p-4 flex-shrink-0">
+        <div className="border-t border-rim bg-ink-1/80 backdrop-blur-sm p-2.5 md:p-4 flex-shrink-0">
           <div className="max-w-3xl mx-auto">
             {/* Attached files preview */}
             {attachedFiles.length > 0 && (
@@ -478,7 +584,7 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
                 {attachedFiles.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-agent/8 border border-cyan-agent/20 text-[12px]">
                     <span className="text-cyan-agent">📎</span>
-                    <span className="text-text-2 font-mono truncate max-w-[200px]">{f.name}</span>
+                    <span className="text-text-2 font-mono truncate max-w-[120px] md:max-w-[200px]">{f.name}</span>
                     <span className="text-text-4 font-mono">{Math.round(f.size / 1024)}KB</span>
                     <button onClick={() => removeAttachedFile(i)} className="text-text-4 hover:text-rose-agent transition-colors ml-1">×</button>
                   </div>
@@ -487,7 +593,7 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
             )}
 
             <div className={cn(
-              "flex items-end gap-2 p-3 rounded-2xl border transition-all",
+              "flex items-end gap-1.5 md:gap-2 p-2 md:p-3 rounded-2xl border transition-all",
               isStreaming
                 ? "border-cyan-agent/30 bg-ink-2"
                 : "border-rim-2 bg-ink-2 focus-within:border-cyan-agent/40"
@@ -539,8 +645,9 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
                 </button>
               )}
             </div>
-            <p className="text-[11px] text-text-4 text-center mt-2 font-mono">
-              Enter ↵ send · Shift+Enter new line · 📎 upload file · [REMEMBER: key = value] save fact
+            <p className="text-[10px] md:text-[11px] text-text-4 text-center mt-1.5 md:mt-2 font-mono">
+              <span className="hidden sm:inline">Enter ↵ send · Shift+Enter new line · 📎 upload file · [REMEMBER: key = value] save fact</span>
+              <span className="sm:hidden">Enter ↵ send · 📎 upload</span>
             </p>
           </div>
         </div>
@@ -575,7 +682,7 @@ function MessageBubble({ message }: { message: DisplayMessage }) {
 
     return (
       <div className="flex justify-end">
-        <div className="max-w-[75%] bg-ink-3 border border-rim-2 rounded-2xl rounded-tr-sm px-4 py-3 text-sm text-text-1 leading-relaxed">
+        <div className="max-w-[85%] md:max-w-[75%] bg-ink-3 border border-rim-2 rounded-2xl rounded-tr-sm px-3 md:px-4 py-2.5 md:py-3 text-[13px] md:text-sm text-text-1 leading-relaxed">
           {files.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2">
               {files.map((f, i) => (
@@ -616,7 +723,7 @@ function MessageBubble({ message }: { message: DisplayMessage }) {
           </div>
 
           {/* Log entries */}
-          <div className="px-4 py-2.5 space-y-1 max-h-[300px] overflow-y-auto">
+          <div className="px-3 md:px-4 py-2 md:py-2.5 space-y-1 max-h-[200px] md:max-h-[300px] overflow-y-auto">
             {allEvents.map((ev, i) => {
               if (ev.type === "thinking") return (
                 <div key={i} className="flex items-center gap-2 font-mono text-[11px] py-0.5">
@@ -627,7 +734,8 @@ function MessageBubble({ message }: { message: DisplayMessage }) {
               );
               if (ev.type === "tool_start") {
                 const argsStr = JSON.stringify(ev.args || {});
-                const shortArgs = argsStr.length > 100 ? argsStr.slice(0, 100) + "…" : argsStr;
+                const maxLen = typeof window !== "undefined" && window.innerWidth < 640 ? 50 : 100;
+                const shortArgs = argsStr.length > maxLen ? argsStr.slice(0, maxLen) + "…" : argsStr;
                 return (
                   <div key={i} className="flex items-start gap-2 font-mono text-[11px] py-0.5">
                     <span className="text-cyan-agent mt-px">▶</span>
@@ -669,8 +777,8 @@ function MessageBubble({ message }: { message: DisplayMessage }) {
       )}
 
       {/* Assistant response */}
-      <div className="flex gap-3 items-start">
-        <Image src="/logo.png" alt="AQ" width={32} height={32} className="rounded-xl flex-shrink-0 mt-0.5 shadow-[0_0_10px_rgba(0,229,204,.2)]" />
+      <div className="flex gap-2 md:gap-3 items-start">
+        <Image src="/logo.png" alt="AQ" width={28} height={28} className="rounded-xl flex-shrink-0 mt-0.5 shadow-[0_0_10px_rgba(0,229,204,.2)] md:w-8 md:h-8" />
         <div className="flex-1 min-w-0">
           {message.isStreaming && !message.content ? (
             <div className="flex items-center gap-2 text-text-3 text-sm">
@@ -793,29 +901,29 @@ function EmptyState({ onSend }: { onSend: (msg: string) => void }) {
   const [showTools, setShowTools] = useState(false);
 
   return (
-    <div className="flex flex-col items-center h-full px-4 py-12 overflow-y-auto">
+    <div className="flex flex-col items-center h-full px-3 md:px-4 py-8 md:py-12 overflow-y-auto">
       {/* Hero */}
-      <div className="text-center mb-10">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-agent to-cyan-dim grid place-items-center text-3xl mb-6 mx-auto shadow-[0_0_32px_rgba(0,229,204,.25)]">
+      <div className="text-center mb-8 md:mb-10">
+        <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-cyan-agent to-cyan-dim grid place-items-center text-2xl md:text-3xl mb-5 md:mb-6 mx-auto shadow-[0_0_32px_rgba(0,229,204,.25)]">
           🤖
         </div>
-        <h2 className="font-display font-extrabold text-2xl tracking-tight mb-2">How can I help?</h2>
-        <p className="text-text-2 text-sm max-w-sm mx-auto leading-relaxed">
-          I'm AutonQwen — an AI agent with access to filesystem, terminal, web search, and database.
+        <h2 className="font-display font-extrabold text-xl md:text-2xl tracking-tight mb-2">How can I help?</h2>
+        <p className="text-text-2 text-[13px] md:text-sm max-w-sm mx-auto leading-relaxed">
+          I&apos;m AutonQwen — an AI agent with access to filesystem, terminal, web search, and database.
         </p>
       </div>
 
       {/* Quick examples */}
       <div className="w-full max-w-2xl mb-8">
         <p className="font-mono text-[10.5px] text-cyan-agent uppercase tracking-[.18em] mb-3 px-1">Try an example</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {agentTools.slice(0, 6).map((t) => (
             <button key={t.name} onClick={() => onSend(t.example)}
-              className="flex items-start gap-3 px-4 py-3 rounded-xl bg-ink-2 border border-rim text-left hover:border-cyan-agent/25 hover:bg-ink-3 transition-all group">
+              className="flex items-start gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-xl bg-ink-2 border border-rim text-left hover:border-cyan-agent/25 hover:bg-ink-3 transition-all group">
               <span className="text-lg leading-none mt-0.5 flex-shrink-0">{t.icon}</span>
               <div className="min-w-0">
                 <p className="font-mono text-[11px] text-text-3 mb-0.5">{t.name}</p>
-                <p className="text-[13px] text-text-2 group-hover:text-text-1 leading-snug truncate">&quot;{t.example}&quot;</p>
+                <p className="text-[12px] md:text-[13px] text-text-2 group-hover:text-text-1 leading-snug truncate">&quot;{t.example}&quot;</p>
               </div>
             </button>
           ))}
@@ -835,16 +943,16 @@ function EmptyState({ onSend }: { onSend: (msg: string) => void }) {
           <div className="grid grid-cols-1 gap-1.5 animate-fade-up">
             {agentTools.map((t) => (
               <button key={t.name} onClick={() => onSend(t.example)}
-                className="flex items-start gap-3 px-4 py-3 rounded-xl bg-ink-2 border border-rim text-left hover:border-cyan-agent/25 hover:bg-ink-3 transition-all group">
-                <div className="w-9 h-9 rounded-lg bg-cyan-agent/8 border border-cyan-agent/15 grid place-items-center text-base flex-shrink-0">
+                className="flex items-start gap-2.5 md:gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-xl bg-ink-2 border border-rim text-left hover:border-cyan-agent/25 hover:bg-ink-3 transition-all group">
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-cyan-agent/8 border border-cyan-agent/15 grid place-items-center text-sm md:text-base flex-shrink-0">
                   {t.icon}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="font-mono font-bold text-[12px] text-text-1">{t.name}</span>
+                    <span className="font-mono font-bold text-[11px] md:text-[12px] text-text-1">{t.name}</span>
                   </div>
-                  <p className="text-text-2 text-[12px] leading-relaxed mb-1">{t.desc}</p>
-                  <p className="font-mono text-[11px] text-cyan-agent/60 italic truncate">example: &quot;{t.example}&quot;</p>
+                  <p className="text-text-2 text-[11px] md:text-[12px] leading-relaxed mb-1 line-clamp-2">{t.desc}</p>
+                  <p className="font-mono text-[10px] md:text-[11px] text-cyan-agent/60 italic truncate">example: &quot;{t.example}&quot;</p>
                 </div>
               </button>
             ))}

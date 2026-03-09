@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getWallet } from "@/lib/session";
+import MobileNav from "./MobileNav";
 
 export default async function LandingPage() {
   const wallet = await getWallet();
@@ -54,12 +55,13 @@ export default async function LandingPage() {
       </div>
 
       {/* NAV */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-8 gap-3 bg-ink/80 backdrop-blur-xl border-b border-rim/40">
-        <div className="flex items-center gap-2.5 mr-6">
-          <Image src="/logo.png" alt="AutonQwen" width={32} height={32} className="rounded-lg shadow-[0_0_14px_rgba(0,229,204,.4)]" />
-          <span className="font-display font-extrabold text-base">AutonQwen</span>
+      <nav className="fixed top-0 left-0 right-0 z-50 h-14 md:h-16 flex items-center px-4 md:px-8 gap-3 bg-ink/80 backdrop-blur-xl border-b border-rim/40">
+        <div className="flex items-center gap-2 md:gap-2.5 mr-2 md:mr-6">
+          <Image src="/logo.png" alt="AutonQwen" width={28} height={28} className="rounded-lg shadow-[0_0_14px_rgba(0,229,204,.4)] md:w-8 md:h-8" />
+          <span className="font-display font-extrabold text-sm md:text-base">AutonQwen</span>
         </div>
-        <div className="flex gap-1">
+        {/* Desktop nav links */}
+        <div className="hidden md:flex gap-1">
           {["Features", "How it works", "Stack", "Roadmap"].map((item) => (
             <a key={item} href={`#${item.toLowerCase().replace(/ /g, "-")}`}
               className="px-3.5 py-1.5 rounded-lg text-sm text-text-2 hover:text-text-1 hover:bg-ink-3 transition-all">
@@ -67,34 +69,36 @@ export default async function LandingPage() {
             </a>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-2.5">
+        <div className="ml-auto flex items-center gap-2 md:gap-2.5">
           {wallet ? (
-            <Link href="/chat" className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-agent/10 border border-cyan-agent/25 text-cyan-agent font-mono text-xs hover:bg-cyan-agent/15 transition-all">
+            <Link href="/chat" className="hidden sm:flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-cyan-agent/10 border border-cyan-agent/25 text-cyan-agent font-mono text-xs hover:bg-cyan-agent/15 transition-all">
               <span className="w-1.5 h-1.5 rounded-full bg-lime-agent animate-blink-dot" />
               {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}
             </Link>
           ) : null}
-          <Link href="/docs" className="px-4 py-2 rounded-lg text-sm font-semibold text-text-2 border border-rim hover:text-text-1 hover:bg-ink-3 hover:border-rim-2 transition-all">
+          <Link href="/docs" className="hidden md:inline-flex px-4 py-2 rounded-lg text-sm font-semibold text-text-2 border border-rim hover:text-text-1 hover:bg-ink-3 hover:border-rim-2 transition-all">
             Docs
           </Link>
           <Link href={wallet ? "/chat" : "/login"}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-cyan-agent text-black hover:bg-cyan-bright transition-all shadow-[0_0_0_0] hover:shadow-[0_4px_20px_rgba(0,229,204,.35)]">
-            {wallet ? "Launch Agent →" : "Connect Wallet"}
+            className="px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold bg-cyan-agent text-black hover:bg-cyan-bright transition-all shadow-[0_0_0_0] hover:shadow-[0_4px_20px_rgba(0,229,204,.35)]">
+            {wallet ? "Launch →" : "Connect"}
           </Link>
+          {/* Mobile hamburger */}
+          <MobileNav hasWallet={!!wallet} walletAddress={wallet?.address} />
         </div>
       </nav>
 
       {/* HERO */}
-      <section className="relative pt-36 pb-20 px-6 text-center flex flex-col items-center">
+      <section className="relative pt-24 md:pt-36 pb-14 md:pb-20 px-4 md:px-6 text-center flex flex-col items-center">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] pointer-events-none"
           style={{ background: "radial-gradient(ellipse at center top, rgba(0,229,204,.06) 0%, transparent 65%)" }} />
 
-        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-agent/25 bg-cyan-agent/5 font-mono text-[11px] text-cyan-agent uppercase tracking-widest mb-8 animate-fade-up">
+        <div className="flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full border border-cyan-agent/25 bg-cyan-agent/5 font-mono text-[9px] md:text-[11px] text-cyan-agent uppercase tracking-widest mb-6 md:mb-8 animate-fade-up">
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-agent animate-blink-dot" />
           Powered by Ollama · Qwen3 · Web3 Auth
         </div>
 
-        <h1 className="font-display font-extrabold text-5xl md:text-6xl lg:text-7xl leading-[1.1] tracking-[-0.03em] max-w-3xl animate-fade-up" style={{ animationDelay: "80ms" }}>
+        <h1 className="font-display font-extrabold text-3xl sm:text-4xl md:text-6xl lg:text-7xl leading-[1.1] tracking-[-0.03em] max-w-3xl animate-fade-up" style={{ animationDelay: "80ms" }}>
           Your{" "}
           <span className="bg-gradient-to-r from-cyan-agent to-cyan-dim bg-clip-text text-transparent">
             autonomous AI
@@ -105,17 +109,17 @@ export default async function LandingPage() {
           </span>
         </h1>
 
-        <p className="text-base md:text-lg text-text-2 leading-relaxed max-w-lg mt-6 animate-fade-up" style={{ animationDelay: "160ms" }}>
-          A ready-to-use AI agent with full access — filesystem, terminal, web, and database. Just connect your wallet and start. No installation required.
+        <p className="text-sm md:text-lg text-text-2 leading-relaxed max-w-lg mt-4 md:mt-6 animate-fade-up" style={{ animationDelay: "160ms" }}>
+          A ready-to-use AI agent with full access — filesystem, terminal, web, and database. Just connect your wallet and start.
         </p>
 
-        <div className="flex gap-3.5 justify-center flex-wrap mt-10 animate-fade-up" style={{ animationDelay: "240ms" }}>
+        <div className="flex gap-3 justify-center flex-wrap mt-8 md:mt-10 animate-fade-up" style={{ animationDelay: "240ms" }}>
           <Link href={wallet ? "/chat" : "/login"}
-            className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold bg-cyan-agent text-black hover:bg-cyan-bright transition-all shadow-[0_0_0_0] hover:shadow-[0_8px_32px_rgba(0,229,204,.4)] hover:-translate-y-0.5">
-            ⚡ {wallet ? "Launch Agent" : "Connect Wallet & Launch"}
+            className="flex items-center gap-2 px-5 md:px-7 py-3 md:py-3.5 rounded-xl text-sm font-bold bg-cyan-agent text-black hover:bg-cyan-bright transition-all shadow-[0_0_0_0] hover:shadow-[0_8px_32px_rgba(0,229,204,.4)] hover:-translate-y-0.5">
+            ⚡ {wallet ? "Launch Agent" : "Connect & Launch"}
           </Link>
           <Link href="#features"
-            className="px-7 py-3.5 rounded-xl text-sm font-semibold border border-cyan-agent/35 text-cyan-agent hover:bg-cyan-agent/7 transition-all">
+            className="px-5 md:px-7 py-3 md:py-3.5 rounded-xl text-sm font-semibold border border-cyan-agent/35 text-cyan-agent hover:bg-cyan-agent/7 transition-all">
             Explore Features →
           </Link>
         </div>
@@ -127,14 +131,14 @@ export default async function LandingPage() {
         </div>
 
         {/* Terminal */}
-        <div className="mt-14 w-full max-w-xl bg-ink-2 border border-rim-2 rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,.6)] animate-fade-up relative z-10" style={{ animationDelay: "360ms" }}>
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-ink-3 border-b border-rim">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-            <span className="flex-1 text-center font-mono text-[10px] text-text-3">AutonQwen Agent</span>
+        <div className="mt-10 md:mt-14 w-full max-w-xl bg-ink-2 border border-rim-2 rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,.6)] animate-fade-up relative z-10" style={{ animationDelay: "360ms" }}>
+          <div className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-ink-3 border-b border-rim">
+            <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#ff5f57]" />
+            <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#febc2e]" />
+            <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#28c840]" />
+            <span className="flex-1 text-center font-mono text-[9px] md:text-[10px] text-text-3">AutonQwen Agent</span>
           </div>
-          <div className="p-5 font-mono text-[12px] leading-[1.9] text-left">
+          <div className="p-3 md:p-5 font-mono text-[10px] md:text-[12px] leading-[1.8] md:leading-[1.9] text-left overflow-x-auto">
             <p className="pl-3 text-text-3">🔐 Connect your wallet to continue...</p>
             <p className="pl-3 text-lime-agent">✔ Wallet 0x71C7...8976F verified</p>
             <p className="pl-3 text-lime-agent">✔ AutonQwen ready · 9 tools loaded</p>
@@ -394,7 +398,7 @@ export default async function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="mx-6 mb-20 rounded-3xl bg-ink-2 border border-cyan-agent/15 p-12 md:p-16 text-center relative overflow-hidden z-10">
+      <section className="mx-4 md:mx-6 mb-14 md:mb-20 rounded-2xl md:rounded-3xl bg-ink-2 border border-cyan-agent/15 p-8 md:p-16 text-center relative overflow-hidden z-10">
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: "radial-gradient(ellipse, rgba(0,229,204,.05) 0%, transparent 65%)" }} />
         {/* CTA floating shapes */}
@@ -402,7 +406,7 @@ export default async function LandingPage() {
           style={{ background: "radial-gradient(circle, #00e5cc, transparent)" }} />
         <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full animate-float-3 opacity-[0.04]"
           style={{ background: "radial-gradient(circle, #f0b429, transparent)", animationDelay: "-5s" }} />
-        <h2 className="relative font-display font-extrabold text-3xl md:text-4xl tracking-tight mb-3 leading-tight">
+        <h2 className="relative font-display font-extrabold text-2xl md:text-4xl tracking-tight mb-3 leading-tight">
           Ready to use{" "}
           <span className="bg-gradient-to-r from-cyan-agent to-cyan-dim bg-clip-text text-transparent">your AI agent?</span>
         </h2>
@@ -418,7 +422,7 @@ export default async function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-rim px-8 md:px-12 py-8 flex items-center justify-between max-w-5xl mx-auto relative z-10">
+      <footer className="border-t border-rim px-4 md:px-12 py-6 md:py-8 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-5xl mx-auto relative z-10">
         <div className="flex items-center gap-2">
           <Image src="/logo.png" alt="AutonQwen" width={24} height={24} className="rounded-md" />
           <span className="font-display font-extrabold text-sm">AutonQwen</span>
