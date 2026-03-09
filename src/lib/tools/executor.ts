@@ -131,11 +131,58 @@ async function webSearch(args: Record<string, unknown>): Promise<ToolResult> {
 
   if (!query) return { success: false, output: "", error: "query is required" };
 
+  // Try DuckDuckGo HTML search (more reliable from VPS than the API)
+  try {
+    const htmlUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const res = await fetch(htmlUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      signal: AbortSignal.timeout(20000),
+    });
+
+    const html = await res.text();
+    const { load } = await import("cheerio");
+    const $ = load(html);
+
+    const results: string[] = [];
+    $(".result").slice(0, maxResults).each((_, el) => {
+      const title = $(el).find(".result__title a").text().trim();
+      const href = $(el).find(".result__title a").attr("href") || "";
+      const snippet = $(el).find(".result__snippet").text().trim();
+
+      // Extract actual URL from DuckDuckGo redirect
+      let url = href;
+      const uddgMatch = href.match(/uddg=([^&]+)/);
+      if (uddgMatch) {
+        url = decodeURIComponent(uddgMatch[1]);
+      }
+
+      if (title) {
+        results.push(`• ${title}\n  ${snippet}\n  URL: ${url}`);
+      }
+    });
+
+    if (results.length > 0) {
+      return { success: true, output: results.join("\n\n") };
+    }
+
+    // Fallback: try Instant Answer API
+    return await webSearchAPI(query, maxResults);
+  } catch {
+    // Fallback to API if HTML search fails
+    return await webSearchAPI(query, maxResults);
+  }
+}
+
+async function webSearchAPI(query: string, maxResults: number): Promise<ToolResult> {
   try {
     const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
     const res = await fetch(url, {
-      headers: { "User-Agent": "AutonQwen/1.0" },
-      signal: AbortSignal.timeout(10000),
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; AutonQwen/1.0)" },
+      signal: AbortSignal.timeout(20000),
     });
 
     const data = await res.json() as {
@@ -178,8 +225,10 @@ async function fetchUrl(args: Record<string, unknown>): Promise<ToolResult> {
 
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "AutonQwen/1.0" },
-      signal: AbortSignal.timeout(15000),
+      headers: {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal: AbortSignal.timeout(25000),
     });
 
     const html = await res.text();
