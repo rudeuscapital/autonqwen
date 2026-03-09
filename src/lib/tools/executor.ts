@@ -51,12 +51,19 @@ export async function executeTool(
 function readFile(args: Record<string, unknown>): ToolResult {
   const filePath = String(args.path || "");
   if (!filePath) return { success: false, output: "", error: "path is required" };
+
+  // Suggest read_spreadsheet for spreadsheet files
+  const ext = path.extname(filePath).toLowerCase();
+  if ([".xlsx", ".xls", ".csv"].includes(ext)) {
+    return { success: false, output: "", error: `Use read_spreadsheet tool for ${ext} files instead of read_file. Call read_spreadsheet with path="${filePath}"` };
+  }
+
   if (!fs.existsSync(filePath))
     return { success: false, output: "", error: `File not found: ${filePath}` };
 
   const stat = fs.statSync(filePath);
-  if (stat.size > 50 * 1024)
-    return { success: false, output: "", error: `File too large (${Math.round(stat.size / 1024)}KB). Max: 50KB` };
+  if (stat.size > 200 * 1024)
+    return { success: false, output: "", error: `File too large (${Math.round(stat.size / 1024)}KB). Max: 200KB` };
 
   const content = fs.readFileSync(filePath, "utf-8");
   return { success: true, output: content };

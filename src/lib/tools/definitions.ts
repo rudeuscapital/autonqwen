@@ -5,7 +5,7 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "read_file",
-      description: "Read the contents of a file from the filesystem. Returns file content as text.",
+      description: "Read a text file from the filesystem. For spreadsheets (.xlsx, .xls, .csv), use read_spreadsheet instead.",
       parameters: {
         type: "object",
         properties: {
