@@ -76,6 +76,9 @@ export default async function LandingPage() {
               {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}
             </Link>
           ) : null}
+          <a href="https://x.com/autonqwen" target="_blank" rel="noopener noreferrer" className="hidden md:inline-flex w-8 h-8 items-center justify-center rounded-lg text-text-2 hover:text-text-1 hover:bg-ink-3 transition-all" aria-label="X (Twitter)">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
           <Link href="/docs" className="hidden md:inline-flex px-4 py-2 rounded-lg text-sm font-semibold text-text-2 border border-rim hover:text-text-1 hover:bg-ink-3 hover:border-rim-2 transition-all">
             Docs
           </Link>
@@ -428,10 +431,13 @@ export default async function LandingPage() {
           <span className="font-display font-extrabold text-sm">AutonQwen</span>
           <span className="font-mono text-[10px] text-text-3 ml-2 hidden md:inline">Autonomous AI Platform</span>
         </div>
-        <div className="flex gap-5">
+        <div className="flex items-center gap-5">
           {[["Home", "/"], ["Chat", "/chat"], ["Login", "/login"]].map(([label, href]) => (
             <Link key={label} href={href} className="text-xs text-text-2 hover:text-cyan-agent transition-colors">{label}</Link>
           ))}
+          <a href="https://x.com/autonqwen" target="_blank" rel="noopener noreferrer" className="text-text-2 hover:text-cyan-agent transition-colors" aria-label="X (Twitter)">
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
         </div>
         <span className="font-mono text-[10px] text-text-4">© 2025 AutonQwen</span>
       </footer>

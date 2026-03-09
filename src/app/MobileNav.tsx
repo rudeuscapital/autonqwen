@@ -58,6 +58,17 @@ export default function MobileNav({ hasWallet, walletAddress }: Props) {
                 Docs
               </Link>
 
+              <a
+                href="https://x.com/autonqwen"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-text-2 hover:text-text-1 hover:bg-ink-3 transition-all"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                Follow on X
+              </a>
+
               <Link
                 href={hasWallet ? "/chat" : "/login"}
                 onClick={() => setOpen(false)}
