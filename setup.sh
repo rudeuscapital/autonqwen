@@ -389,6 +389,17 @@ EOF
   info "Building Next.js application…"
   sudo -u "$APP_USER" npm run build 2>&1 | tee -a "$LOG_FILE" | tail -10
   ok "Next.js build complete"
+
+  # Copy static assets into standalone (required by Next.js standalone output)
+  info "Copying static assets to standalone build…"
+  if [[ -d "$INSTALL_DIR/.next/standalone" ]]; then
+    cp -r "$INSTALL_DIR/public" "$INSTALL_DIR/.next/standalone/public" 2>/dev/null || true
+    cp -r "$INSTALL_DIR/.next/static" "$INSTALL_DIR/.next/standalone/.next/static" 2>/dev/null || true
+    chown -R "$APP_USER:$APP_USER" "$INSTALL_DIR/.next/standalone"
+    ok "Static assets copied to standalone"
+  else
+    warn "Standalone build directory not found — check build output"
+  fi
 }
 
 # ─── Systemd service ─────────────────────────────────────────
@@ -686,6 +697,9 @@ case "$cmd" in
     inf "Rebuilding AutonQwen…"
     cd "$INSTALL_DIR"
     sudo -u "$APP_USER" npm run build && \
+    cp -r "$INSTALL_DIR/public" "$INSTALL_DIR/.next/standalone/public" 2>/dev/null && \
+    cp -r "$INSTALL_DIR/.next/static" "$INSTALL_DIR/.next/standalone/.next/static" 2>/dev/null && \
+    chown -R "$APP_USER:$APP_USER" "$INSTALL_DIR/.next/standalone" && \
     systemctl restart autonqwen && \
     ok "Deploy complete. Check: aq status"
     ;;
@@ -696,6 +710,9 @@ case "$cmd" in
     git pull && \
     sudo -u "$APP_USER" npm install && \
     sudo -u "$APP_USER" npm run build && \
+    cp -r "$INSTALL_DIR/public" "$INSTALL_DIR/.next/standalone/public" 2>/dev/null && \
+    cp -r "$INSTALL_DIR/.next/static" "$INSTALL_DIR/.next/standalone/.next/static" 2>/dev/null && \
+    chown -R "$APP_USER:$APP_USER" "$INSTALL_DIR/.next/standalone" && \
     systemctl restart autonqwen && \
     ok "Update complete"
     ;;
