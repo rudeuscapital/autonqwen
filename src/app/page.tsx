@@ -424,6 +424,27 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* SUPPORTED BY */}
+      <section className="relative z-10 py-12 md:py-16 px-4 md:px-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="font-mono text-[11px] uppercase tracking-[.25em] text-text-3 mb-8">Supported by</p>
+          <div className="flex items-center justify-center gap-8 md:gap-14">
+            <a href="https://x.com/ollama" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center gap-3 transition-all">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-ink-2 border border-rim group-hover:border-cyan-agent/40 group-hover:shadow-[0_0_20px_rgba(0,229,204,.1)] transition-all overflow-hidden">
+                <Image src="https://pbs.twimg.com/profile_images/2023482262030086147/9BAatmvy_400x400.jpg" alt="Ollama" width={64} height={64} className="w-full h-full object-cover" />
+              </div>
+              <span className="text-sm font-semibold text-text-2 group-hover:text-text-1 transition-colors">Ollama</span>
+            </a>
+            <a href="https://x.com/Alibaba_Qwen" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center gap-3 transition-all">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-ink-2 border border-rim group-hover:border-cyan-agent/40 group-hover:shadow-[0_0_20px_rgba(0,229,204,.1)] transition-all overflow-hidden">
+                <Image src="https://pbs.twimg.com/profile_images/1894073235379273728/0ROUmdkE_400x400.jpg" alt="Qwen" width={64} height={64} className="w-full h-full object-cover" />
+              </div>
+              <span className="text-sm font-semibold text-text-2 group-hover:text-text-1 transition-colors">Qwen</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer className="border-t border-rim px-4 md:px-12 py-6 md:py-8 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-5xl mx-auto relative z-10">
         <div className="flex items-center gap-2">

@@ -2,6 +2,11 @@
 const nextConfig = {
   output: "standalone",
   serverExternalPackages: ["better-sqlite3", "xlsx"],
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "pbs.twimg.com" },
+    ],
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "12mb",
