@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/session";
+import { UPLOAD_DIR } from "@/lib/paths";
 import fs from "fs";
 import path from "path";
 
 export const runtime = "nodejs";
-
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.resolve("./uploads");
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_EXTENSIONS = new Set([
   // Spreadsheets
@@ -25,16 +24,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const formData = await req.formData();
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `Failed to parse upload: ${msg}` }, { status: 400 });
+  }
+
   const files = formData.getAll("files") as File[];
 
   if (files.length === 0) {
     return NextResponse.json({ error: "No files provided" }, { status: 400 });
   }
 
-  // Ensure upload dir exists
-  if (!fs.existsSync(UPLOAD_DIR)) {
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  // Ensure upload dir exists and is writable
+  try {
+    if (!fs.existsSync(UPLOAD_DIR)) {
+      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    }
+    fs.accessSync(UPLOAD_DIR, fs.constants.W_OK);
+  } catch {
+    return NextResponse.json(
+      { error: `Upload directory not writable: ${UPLOAD_DIR}` },
+      { status: 500 }
+    );
   }
 
   const uploaded: { name: string; path: string; size: number }[] = [];

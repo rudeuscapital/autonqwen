@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 import type { ToolResult } from "@/types";
+import { MEMORY_DIR } from "@/lib/paths";
 
 // ─── Safety blocklist for run_command ─────────────────────
 const BLOCKED_PATTERNS = [
@@ -212,8 +213,7 @@ async function fetchUrl(args: Record<string, unknown>): Promise<ToolResult> {
 
 function dbQuery(args: Record<string, unknown>): ToolResult {
   const query = String(args.query || "");
-  const defaultDbDir = process.env.MEMORY_DIR || "./memory";
-  const dbPath = String(args.db_path || path.join(defaultDbDir, "agent.db"));
+  const dbPath = String(args.db_path || path.join(MEMORY_DIR, "agent.db"));
 
   if (!query) return { success: false, output: "", error: "query is required" };
 

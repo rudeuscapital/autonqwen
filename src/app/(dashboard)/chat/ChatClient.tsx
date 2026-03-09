@@ -182,6 +182,11 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
 
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        const text = await res.text();
+        alert(`Upload failed (${res.status}): ${text}`);
+        return;
+      }
       const data = await res.json() as {
         uploaded: { name: string; path: string; size: number }[];
         errors: string[];
@@ -192,8 +197,8 @@ export default function ChatClient({ wallet, initialSessions }: Props) {
       if (data.errors?.length > 0) {
         alert(data.errors.join("\n"));
       }
-    } catch {
-      alert("Failed to upload file");
+    } catch (err) {
+      alert("Failed to upload file: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setUploading(false);
       // Reset file input

@@ -372,6 +372,7 @@ deploy_app() {
 OLLAMA_URL=http://localhost:11434
 DEFAULT_MODEL=${OLLAMA_MODEL:-qwen3.5}
 SESSION_SECRET=${SESSION_SECRET}
+INSTALL_DIR=${INSTALL_DIR}
 MEMORY_DIR=${INSTALL_DIR}/memory
 UPLOAD_DIR=${INSTALL_DIR}/uploads
 DOMAIN=${DOMAIN}
@@ -434,7 +435,7 @@ SyslogIdentifier=autonqwen
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
-ReadWritePaths=${INSTALL_DIR}/memory ${INSTALL_DIR}/uploads
+ReadWritePaths=${INSTALL_DIR}/memory ${INSTALL_DIR}/uploads ${INSTALL_DIR}/.next/standalone/.next/cache
 ProtectHome=yes
 
 [Install]
@@ -477,6 +478,19 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Upload endpoint — allow large bodies, longer timeout
+    location /api/upload {
+        proxy_pass http://autonqwen_app;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        client_max_body_size 20M;
+        proxy_read_timeout 120s;
+        proxy_connect_timeout 10s;
+    }
 
     # SSE endpoint — disable ALL buffering
     location /api/chat {

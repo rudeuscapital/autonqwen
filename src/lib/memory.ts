@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import type { ChatMessage, SessionData, Session, FactMemory } from "@/types";
+import { MEMORY_DIR } from "@/lib/paths";
 
-const MEMORY_DIR = process.env.MEMORY_DIR || "./memory";
 const FACTS_FILE = path.join(MEMORY_DIR, "facts.json");
 const SESSIONS_DIR = path.join(MEMORY_DIR, "sessions");
 
