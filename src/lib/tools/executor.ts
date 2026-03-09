@@ -318,7 +318,9 @@ function readSpreadsheet(args: Record<string, unknown>): ToolResult {
   const XLSX = require("xlsx");
   let workbook;
   try {
-    workbook = XLSX.readFile(filePath);
+    // Read as buffer first to avoid xlsx library file access issues with sandboxed environments
+    const buffer = fs.readFileSync(filePath);
+    workbook = XLSX.read(buffer, { type: "buffer" });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { success: false, output: "", error: `Failed to read spreadsheet: ${msg}` };
