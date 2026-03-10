@@ -561,6 +561,13 @@ setup_ssl() {
     ok "certbot installed"
   fi
 
+  # Make sure nginx has the right server_name before certbot runs
+  NGINX_CONF="/etc/nginx/sites-available/autonqwen"
+  if [[ -f "$NGINX_CONF" ]]; then
+    sed -i "s/server_name .*/server_name ${DOMAIN};/" "$NGINX_CONF"
+    nginx -t >> "$LOG_FILE" 2>&1 && systemctl reload nginx
+  fi
+
   info "Obtaining certificate for: $DOMAIN"
   if certbot --nginx \
     --non-interactive \
@@ -570,9 +577,19 @@ setup_ssl() {
     --redirect \
     >> "$LOG_FILE" 2>&1; then
     ok "SSL certificate obtained and Nginx updated"
+
+    # Update .env.local with DOMAIN
+    ENV_FILE="$INSTALL_DIR/.env.local"
+    if [[ -f "$ENV_FILE" ]]; then
+      if grep -q "^DOMAIN=" "$ENV_FILE"; then
+        sed -i "s/^DOMAIN=.*/DOMAIN=${DOMAIN}/" "$ENV_FILE"
+      else
+        echo "DOMAIN=${DOMAIN}" >> "$ENV_FILE"
+      fi
+    fi
   else
     warn "certbot failed — site running on HTTP only. Check DNS and try:"
-    warn "  certbot --nginx -d $DOMAIN"
+    warn "  aq ssl $DOMAIN"
   fi
 
   # Auto-renewal via cron
@@ -639,6 +656,7 @@ usage() {
   echo -e "  ${BOLD}Deploy:${RST}"
   echo -e "  deploy      Rebuild and restart after source changes"
   echo -e "  update      Git pull + rebuild (if using git)"
+  echo -e "  ssl <domain> Setup HTTPS with Let's Encrypt"
   echo -e ""
   echo -e "  ${BOLD}Data:${RST}"
   echo -e "  memory      Show saved agent facts"
@@ -736,6 +754,66 @@ case "$cmd" in
     chown -R "$APP_USER:$APP_USER" "$INSTALL_DIR/.next/standalone" && \
     systemctl restart autonqwen && \
     ok "Update complete"
+    ;;
+
+  ssl)
+    DOMAIN="${2:?Usage: aq ssl <domain>  (e.g. aq ssl app.example.com)}"
+    EMAIL="${3:-admin@${DOMAIN}}"
+    inf "Setting up HTTPS for $DOMAIN…"
+
+    # Install certbot if needed
+    if ! command -v certbot &>/dev/null; then
+      inf "Installing certbot…"
+      DEBIAN_FRONTEND=noninteractive apt-get update -y > /dev/null 2>&1
+      DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx > /dev/null 2>&1
+      ok "certbot installed"
+    fi
+
+    # Ensure nginx config has the correct server_name
+    NGINX_CONF="/etc/nginx/sites-available/autonqwen"
+    if [[ -f "$NGINX_CONF" ]]; then
+      sed -i "s/server_name .*/server_name ${DOMAIN};/" "$NGINX_CONF"
+      nginx -t > /dev/null 2>&1 && systemctl reload nginx
+      ok "Nginx server_name updated to $DOMAIN"
+    fi
+
+    # Run certbot
+    if certbot --nginx \
+      --non-interactive \
+      --agree-tos \
+      --email "$EMAIL" \
+      --domains "$DOMAIN" \
+      --redirect; then
+      ok "SSL certificate obtained and HTTPS enabled!"
+      ok "Your site is now live at: https://$DOMAIN"
+    else
+      err "certbot failed. Make sure:"
+      err "  1. DNS for $DOMAIN points to this server's IP"
+      err "  2. Port 80 and 443 are open (aq firewall)"
+      err "  3. Try manually: certbot --nginx -d $DOMAIN"
+      exit 1
+    fi
+
+    # Auto-renewal cron
+    if ! crontab -l 2>/dev/null | grep -q "certbot renew"; then
+      (crontab -l 2>/dev/null; echo "0 3 * * * certbot renew --quiet && systemctl reload nginx") | crontab -
+      ok "Auto-renewal cron added (daily at 3am)"
+    fi
+
+    # Update .env.local with DOMAIN
+    ENV_FILE="$INSTALL_DIR/.env.local"
+    if [[ -f "$ENV_FILE" ]]; then
+      if grep -q "^DOMAIN=" "$ENV_FILE"; then
+        sed -i "s/^DOMAIN=.*/DOMAIN=${DOMAIN}/" "$ENV_FILE"
+      else
+        echo "DOMAIN=${DOMAIN}" >> "$ENV_FILE"
+      fi
+      ok "DOMAIN updated in .env.local"
+    fi
+
+    # Restart app to pick up DOMAIN change
+    systemctl restart autonqwen
+    ok "All done! Visit https://$DOMAIN"
     ;;
 
   memory)
