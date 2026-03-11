@@ -441,6 +441,24 @@ export default async function LandingPage() {
               </div>
               <span className="text-sm font-semibold text-text-2 group-hover:text-text-1 transition-colors">Qwen</span>
             </a>
+            <a href="https://x.com/marak" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center gap-3 transition-all">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-ink-2 border border-rim group-hover:border-cyan-agent/40 group-hover:shadow-[0_0_20px_rgba(0,229,204,.1)] transition-all overflow-hidden">
+                <Image src="https://pbs.twimg.com/profile_images/1598168278039412736/zyMvxt8P_400x400.png" alt="Marak" width={64} height={64} className="w-full h-full object-cover" />
+              </div>
+              <span className="text-sm font-semibold text-text-2 group-hover:text-text-1 transition-colors">Marak.com</span>
+            </a>
+            <a href="https://x.com/therealchaseeb" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center gap-3 transition-all">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-ink-2 border border-rim group-hover:border-cyan-agent/40 group-hover:shadow-[0_0_20px_rgba(0,229,204,.1)] transition-all overflow-hidden">
+                <Image src="https://pbs.twimg.com/profile_images/2009889791824007168/8tqKykl7_400x400.jpg" alt="Chase" width={64} height={64} className="w-full h-full object-cover" />
+              </div>
+              <span className="text-sm font-semibold text-text-2 group-hover:text-text-1 transition-colors">Chase</span>
+            </a>
+            <a href="https://x.com/zaimiri" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center gap-3 transition-all">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-ink-2 border border-rim group-hover:border-cyan-agent/40 group-hover:shadow-[0_0_20px_rgba(0,229,204,.1)] transition-all overflow-hidden">
+                <Image src="https://pbs.twimg.com/profile_images/1956760267330572288/RLKoQJwK_400x400.jpg" alt="zaimiri" width={64} height={64} className="w-full h-full object-cover" />
+              </div>
+              <span className="text-sm font-semibold text-text-2 group-hover:text-text-1 transition-colors">zaimiri</span>
+            </a>
           </div>
         </div>
       </section>
