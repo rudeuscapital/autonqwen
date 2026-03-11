@@ -321,10 +321,10 @@ export default async function LandingPage() {
               status: "in-progress",
               color: "gold",
               items: [
+                "$ATQWEN token launch",
+                "Token-gated premium features",
                 "Multi-model support & hot-swap",
                 "RAG with document embeddings",
-                "Image & vision capabilities",
-                "Advanced prompt chaining",
                 "Plugin system for custom tools",
               ],
             },
@@ -334,8 +334,8 @@ export default async function LandingPage() {
               status: "upcoming",
               color: "rose",
               items: [
-                "$ATQWEN token launch",
-                "Token-gated premium features",
+                "Image & vision capabilities",
+                "Advanced prompt chaining",
                 "Community tool marketplace",
                 "Multi-agent collaboration",
                 "On-chain activity logging",
