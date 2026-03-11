@@ -269,23 +269,23 @@ export default async function LandingPage() {
               <div className="w-full max-w-md flex items-center gap-3 px-5 py-3.5 rounded-xl bg-ink-3 border border-rim-2">
                 <span className="font-mono text-[11px] text-text-3 whitespace-nowrap">CA:</span>
                 <span className="flex-1 font-mono text-[13px] text-cyan-agent tracking-wider text-center select-all cursor-pointer">
-                  CwVARCoidoTJrMH5JH9sVJte15wjdeyQy9eCjXkKBAGS
+                  0x19093a512fd383ffde8be9fda37e630022505ba3
                 </span>
               </div>
 
               {/* Info badges */}
               <div className="flex gap-2 flex-wrap justify-center mt-1">
-                {["Ticker: $ATQWEN", "Network: Solana", "Platform: Bags.fm"].map((b) => (
+                {["Ticker: $ATQWEN", "Network: Base", "Platform: Bankr.bot"].map((b) => (
                   <span key={b} className="px-2.5 py-1 rounded-full bg-ink-3 border border-rim font-mono text-[10px] text-text-3">{b}</span>
                 ))}
               </div>
             </div>
 
             {/* Live badge */}
-            <a href="https://bags.fm/launch/CwVARCoidoTJrMH5JH9sVJte15wjdeyQy9eCjXkKBAGS" target="_blank" rel="noopener noreferrer"
+            <a href="https://bankr.bot/launches/0x19093a512fd383ffde8be9fda37e630022505ba3" target="_blank" rel="noopener noreferrer"
               className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-green-500/20 bg-green-500/5 hover:bg-green-500/10 transition-colors">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-blink-dot" />
-              <span className="font-mono text-[11px] text-green-400">Live on Bags.fm</span>
+              <span className="font-mono text-[11px] text-green-400">Live on Bankr.bot</span>
             </a>
           </div>
         </div>
