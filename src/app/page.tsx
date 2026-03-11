@@ -268,25 +268,24 @@ export default async function LandingPage() {
               {/* Contract address placeholder */}
               <div className="w-full max-w-md flex items-center gap-3 px-5 py-3.5 rounded-xl bg-ink-3 border border-rim-2">
                 <span className="font-mono text-[11px] text-text-3 whitespace-nowrap">CA:</span>
-                <span className="flex-1 font-mono text-[13px] text-cyan-agent tracking-wider text-center select-all cursor-pointer">
-                  89UiEB8QNQpCGNhLteYV35KJkHBTbVMQXBLMnU9Lpump
+                <span className="flex-1 font-mono text-[13px] text-text-3 tracking-wider text-center">
+                  Coming Soon
                 </span>
               </div>
 
               {/* Info badges */}
               <div className="flex gap-2 flex-wrap justify-center mt-1">
-                {["Ticker: $ATQWEN", "Network: Solana", "Platform: Pump.fun"].map((b) => (
+                {["Ticker: $ATQWEN", "Network: TBA", "Supply: TBA"].map((b) => (
                   <span key={b} className="px-2.5 py-1 rounded-full bg-ink-3 border border-rim font-mono text-[10px] text-text-3">{b}</span>
                 ))}
               </div>
             </div>
 
-            {/* Live badge */}
-            <a href="https://pump.fun/coin/89UiEB8QNQpCGNhLteYV35KJkHBTbVMQXBLMnU9Lpump" target="_blank" rel="noopener noreferrer"
-              className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-green-500/20 bg-green-500/5 hover:bg-green-500/10 transition-colors">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-blink-dot" />
-              <span className="font-mono text-[11px] text-green-400">Live on Pump.fun</span>
-            </a>
+            {/* Coming soon pulse */}
+            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gold-agent/20 bg-gold-agent/5 animate-pulse-border" style={{ animationDuration: "3s" }}>
+              <span className="text-sm">🚀</span>
+              <span className="font-mono text-[11px] text-gold-agent">Launch Coming Soon</span>
+            </div>
           </div>
         </div>
       </section>
